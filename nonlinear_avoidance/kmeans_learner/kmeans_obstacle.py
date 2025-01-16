@@ -9,6 +9,7 @@ import sys
 import warnings
 import math
 from typing import Optional
+import matplotlib.pyplot as plt
 
 import numpy as np
 from numpy import linalg as LA

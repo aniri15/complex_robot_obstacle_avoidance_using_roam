@@ -194,5 +194,8 @@ def animation_wavy_dynamics(save_animation=False):
 if (__name__) == "__main__":
     # def main():
     plt.style.use("dark_background")
+    
+    
+
     animation_straight_dynamics(save_animation=True)
     animation_wavy_dynamics(save_animation=True)

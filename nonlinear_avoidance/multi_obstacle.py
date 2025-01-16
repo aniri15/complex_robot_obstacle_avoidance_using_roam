@@ -11,7 +11,19 @@ from vartools.states import Pose, Twist
 from dynamic_obstacle_avoidance.obstacles import Obstacle
 from nonlinear_avoidance.geometry import get_intersection_of_obstacles
 
-
+"""function summary for MultiObstacle:
+1. get pose
+2. update pose
+3. update deformation
+4. is collision free
+5. get gamma
+6. get gamma except components
+7. get parent idx
+8. get component
+9. get root
+10. set root
+11. add component
+"""
 @dataclass
 class MultiObstacle:
     _pose: Pose

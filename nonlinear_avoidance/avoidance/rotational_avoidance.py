@@ -7,8 +7,8 @@
 # TODO: Speed up using cython / cpp e.g. eigen?
 # TODO: list / array stack for lru_cache to speed
 
+#from .rotational_avoider import RotationalAvoider
 from .rotational_avoider import RotationalAvoider
-
 
 def obstacle_avoidance_rotational(*args, **kwargs):
     # warnings.warn("Depreciated - switch to 'Avoider'.")

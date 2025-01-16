@@ -7,9 +7,10 @@ from __future__ import annotations  # To be removed in future python versions
 
 import math
 import warnings
+from dataclasses import dataclass
 
 from collections import namedtuple
-from typing import Optional, Hashable
+from typing import Optional, Protocol, Hashable
 
 import numpy as np
 import numpy.typing as npt
@@ -39,6 +40,7 @@ from nonlinear_avoidance.dynamics.projected_rotation_dynamics import (
 from nonlinear_avoidance.vector_rotation import VectorRotationXd
 from nonlinear_avoidance.vector_rotation import VectorRotationTree
 from nonlinear_avoidance.vector_rotation import VectorRotationSequence
+import networkx as nx
 
 
 NodeType = Hashable
@@ -74,7 +76,7 @@ def get_limited_weights_to_max_sum(weights: npt.ArrayLike) -> float | np.ndarray
 
     return (new_weights, 1.0)
 
-
+# Get the weights of the distances function
 def compute_gamma_weights(
     distances: npt.ArrayLike,
     min_distance: float = 1.0,
@@ -101,7 +103,8 @@ def compute_gamma_weights(
     else:
         return weights / np.sum(weights)
 
-
+# Get the relative velocity of the obstacles.
+# Relative velocity of the obstacles: the velocity of the moving or deforming obstacles
 def compute_multiobstacle_relative_velocity(
     position: np.ndarray,
     environment: MultiObstacleContainer,
@@ -157,8 +160,13 @@ def compute_multiobstacle_relative_velocity(
 class MultiObstacleAvoider:
     """Obstacle Avoider which can take a 'multi-obstacle' as an input.
 
+
     default_dynamics: Are the 'fall-back' dynamics if they exist..
     """
+
+    """ Functionality: 
+    Most important function is the 'evaluate_sequence' function, which returns the velocity based on the convergence dynamics
+    , and 'create_with_convergence_dynamics' function, which creates the convergence dynamics based on the initial dynamics"""
 
     # TODO: clean up to remove old functions
     # TODO: refactoring for speed-up
@@ -236,6 +244,7 @@ class MultiObstacleAvoider:
         self.tree_list = value
 
     @classmethod
+    # get the convergence dynamics
     def create_with_convergence_dynamics(
         cls,
         obstacle_container: list[HierarchyObstacle],
@@ -254,6 +263,7 @@ class MultiObstacleAvoider:
         )
 
     @staticmethod
+    # create the local convergence dynamics
     def create_local_convergence_dynamics(
         initial_dynamics: DynamicalSystem,
         reference_dynamics: Optional[DynamicalSystem] = None,
@@ -298,31 +308,40 @@ class MultiObstacleAvoider:
             initial_velocity = self.initial_dynamics.evaluate(position)
             initial_magnitude = np.linalg.norm(initial_velocity)
 
+        # the output is the result of function (68), vr(), angle
         initial_sequence = evaluate_dynamics_sequence(
             position,
             self.initial_dynamics,
+            # default_dynamics=self.default_dynamics
         )
-
-        # No-sequence can be generated at zero-velocity position, 
-        # e.g., at the attractor
-        if initial_sequence is None:
-            return np.zeros(self.initial_dynamics.dimension)
-
-        # No obstacles -> no modulation. Just return final vector
+        #print('initial sequence', initial_sequence)
+        #length = len(self.obstacle_container)
         if not len(self.obstacle_container):
             return initial_sequence.get_end_vector() * initial_magnitude
+
 
         relative_velocity = compute_multiobstacle_relative_velocity(
             position, self.tree_list
         )
-        
+
+        if initial_sequence is None:
+            return np.zeros(self.initial_dynamics.dimension)
+
+        # if self.default_dynamics is None:
+        #print("position", position.shape)
         convergence_sequence = self.compute_convergence_sequence(
             position, initial_sequence
         )
-        
+        # else:
+        #     convergence_sequence = evaluate_dynamics_sequence(
+        #         position, self.default_dynamics
+        #     )
+        #print('convergence sequence', convergence_sequence)
         final_sequence = self.evaluate_avoidance_from_sequence(
             position, convergence_sequence
         )
+        
+        #self._tangent_tree.draw()
 
         # Move velocity to relative (moving) frame
         # final_velocity = final_sequence.get_end_vector() + relative_velocity
@@ -509,6 +528,8 @@ class MultiObstacleAvoider:
         # Create sequence and populate it
         root_id = -10
         init_id = -1
+
+        # get the rotation sequence without the root
         self.conv_tree = VectorRotationTree.from_sequence(
             root_id=root_id,
             node_id=init_id,
@@ -770,7 +791,8 @@ class MultiObstacleAvoider:
 
             # Normalize component weight
             tree_influence_weights[ii_tree] = np.sum(obstacle_weights)
-
+            tree_influence_weights
+            #print(np.sum(obstacle_weights))
             if np.isnan(np.sum(obstacle_weights)):
                 breakpoint()
 
@@ -1111,7 +1133,11 @@ class MultiObstacleAvoider:
 
             if occlusion_gamma >= 1:
                 continue
-
+            
+            if occlusion_gamma < 0:   # why gamma is negative? why it is not accepted?
+                occlusion_gamma = 0
+                #breakpoint()
+            
             ref_parent = comp_parent.get_reference_point(in_global_frame=True)
             ref_comp = component.get_reference_point(in_global_frame=True)
             vec_pos = position - ref_comp
@@ -1123,7 +1149,12 @@ class MultiObstacleAvoider:
             if dot_prod >= 1.0:
                 occlusion_weights[ii] = 0
                 continue
+            
+
             occlusion_weights[ii] = occlusion_gamma ** (1 / (1 - dot_prod))
+            # print(ii)
+            # print(occlusion_gamma,dot_prod)
+            # print(occlusion_weights)
 
         if np.any(np.isnan(occlusion_weights)):
             breakpoint()

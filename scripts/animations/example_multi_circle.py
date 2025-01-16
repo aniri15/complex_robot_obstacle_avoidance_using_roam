@@ -13,7 +13,7 @@ from dynamic_obstacle_avoidance.visualization.plot_obstacle_dynamics import (
     plot_obstacle_dynamics,
 )
 
-from nonlinear_avoidance.arch_obstacle import MultiObstacleContainer
+#from nonlinear_avoidance.arch_obstacle import MultiObstacleContainer
 from nonlinear_avoidance.multi_obstacle_avoider import MultiObstacleAvoider
 from nonlinear_avoidance.avoidance import RotationalAvoider
 from nonlinear_avoidance.rotation_container import RotationContainer

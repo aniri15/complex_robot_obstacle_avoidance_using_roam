@@ -28,7 +28,7 @@ class CubeVisualizer:
         xmin, ymin, zmin = -axes_length * 0.5
         xmax, ymax, zmax = axes_length * 0.5
 
-        nn = self.n_grid * 1j
+        nn = self.n_grid * 1j # 2j
 
         faces = []
         x, y = np.mgrid[xmin:xmax:nn, ymin:ymax:nn]
@@ -55,6 +55,10 @@ class CubeVisualizer:
         x = np.ones(z.shape) * xmax
         faces.append((x, y, z))
 
+        # faces structure (nn: dvided into 2 parts)
+        # [(xmin-xmax, ymin-ymax,zmin), (xmin-xmax, ymin-ymax,zmax),
+        # (xmin-xmax, zmin-zmax,ymin), (xmin-xmax, zmin-zmax,ymax),
+        # (ymin-ymax, zmin-zmax,xmin), (ymin-ymax, zmin-zmax,xmax)]
         return faces
 
     def transform_faces_from_relative(self, pose: Pose) -> list:
@@ -76,9 +80,10 @@ class CubeVisualizer:
 
     def draw_cube(self) -> None:
         global_faces = self.transform_faces_from_relative(self.obstacle.pose)
-
+        #print('cuboid faces: ', global_faces)
         for grid in global_faces:
             x, y, z = grid
+            #print('x: ', x, 'y: ', y, 'z: ', z)
             mesh = mlab.mesh(x, y, z, opacity=1.0)
             # The lut is a 255x4 array, with the columns representing RGBA
             # (red, green, blue, alpha) coded with integers going from 0 to 255.

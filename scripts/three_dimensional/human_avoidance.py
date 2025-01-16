@@ -15,8 +15,8 @@ from mayavi.sources.api import ParametricSurface
 from mayavi.modules.api import Surface
 from mayavi import mlab
 
-# (!!!) Somehow cv2 has to be imported after mayavi (?!)
-# import cv2
+# (!!!) Somehow cv2 has to be imported after mayavi (?!) 
+import cv2
 
 from vartools.states import Pose
 from vartools.dynamics import ConstantValue
@@ -28,6 +28,7 @@ from dynamic_obstacle_avoidance.obstacles import Obstacle
 from dynamic_obstacle_avoidance.obstacles import CuboidXd as Cuboid
 from dynamic_obstacle_avoidance.obstacles import EllipseWithAxes as Ellipse
 
+from nonlinear_avoidance.multi_body_franka_obs import create_3d_franka_obs2
 from nonlinear_avoidance.multi_body_human import create_3d_human
 from nonlinear_avoidance.multi_body_human import (
     transform_from_multibodyobstacle_to_multiobstacle,
@@ -208,13 +209,17 @@ def plot_axes(lensoffset=0.0):
 
 
 def set_view():
+    # mlab.view(
+    #     -150.15633889829527,
+    #     68.76031172885509,
+    #     4.135728793575641,
+    #     (-0.16062227, -0.1689306, -0.00697224)
+    #     # distance=5.004231840226419,
+    #     # focalpoint=(-0.32913308, 0.38534346, -0.14484502),
+    # )
     mlab.view(
-        -150.15633889829527,
-        68.76031172885509,
-        4.135728793575641,
-        (-0.16062227, -0.1689306, -0.00697224)
-        # distance=5.004231840226419,
-        # focalpoint=(-0.32913308, 0.38534346, -0.14484502),
+        1,1,1,
+        (-0.16062227, -0.1689306, -0.00697224),
     )
     mlab.background = (255, 255, 255)
 
@@ -486,6 +491,7 @@ class MayaviAnimator:
         )
         start_positions = np.vstack((xv.flatten(), yv.flatten(), zv.flatten()))
         self.n_traj = start_positions.shape[1]
+        # self.trajectories shape is (3,301,25), 25 trajectories, 301 time steps and 3 dimensions
         self.trajectories = np.zeros((dimension, self.it_max + 1, self.n_traj))
         self.trajectories[:, 0, :] = start_positions
 
@@ -493,7 +499,8 @@ class MayaviAnimator:
         self.color_list = [cm(1.0 * cc / self.n_traj) for cc in range(self.n_traj)]
 
         # Create Scene
-        self.human_obstacle_3d = create_3d_human()
+        #self.human_obstacle_3d = create_3d_human()
+        self.human_obstacle_3d = create_3d_franka_obs2()
         dynamics = LinearSystem(attractor_position=np.array([0, 3.0, 0.0]))
 
         transformed_human = transform_from_multibodyobstacle_to_multiobstacle(
@@ -620,8 +627,8 @@ class MayaviAnimator:
                 scale_factor=0.06,
             )
 
-        if self.dynamic_human:
-            self.update_human(ii)
+        #if self.dynamic_human:
+        #    self.update_human(ii)
 
         set_view()
 
@@ -635,7 +642,7 @@ def main_animation():
 
 
 def main_animation_dynamic():
-    # animator = MayaviAnimator(filename="avoidance_around_dynamic_human", it_max=20)
+    #animator = MayaviAnimator(filename="avoidance_around_dynamic_human", it_max=20)
     animator = MayaviAnimator(filename="avoidance_around_dynamic_human")
 
     # animator.setup(n_grid=1)
@@ -645,6 +652,7 @@ def main_animation_dynamic():
     animator.run()
 
     animator.save_animation()
+    #animator.save_animation_using_cv2()
 
 
 if (__name__) == "__main__":

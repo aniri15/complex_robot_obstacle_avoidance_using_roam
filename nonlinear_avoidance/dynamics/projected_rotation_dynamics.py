@@ -80,7 +80,7 @@ class ProjectedRotationDynamics:
         self.max_gamma = max_gamma
         # Modify if needed
         self.attractor_influence = 3
-        self.dotprod_projection_power = 2
+        self.dotprod_projection_power = 2#
 
         if initial_dynamics is None:
             self.initial_dynamics = LinearSystem(attractor_position=attractor_position)

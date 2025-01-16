@@ -2,6 +2,7 @@
 from typing import Optional, Callable
 
 import numpy as np
+import math
 from scipy.spatial.transform import Rotation
 
 import matplotlib.pyplot as plt
@@ -536,6 +537,7 @@ def test_conveyer_setup(visualize=False, n_grid=3):
     )
 
     if visualize:
+        print("Visualize")
         visualizer = Visualization3D()
         visualizer.plot_multi_obstacles(container)
 
@@ -642,8 +644,8 @@ if (__name__) == "__main__":
     # np.set_printoptions(precision=3)
     np.set_printoptions(precision=16)
 
-    # mlab.close(all=True)
-    # plt.close("all")
+    mlab.close(all=True)
+    plt.close("all")
 
     # test_straight_avoidance_cube(visualize=True)
     # test_linear_avoidance_sphere(visualize=True)

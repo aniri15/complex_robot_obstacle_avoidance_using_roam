@@ -20,6 +20,7 @@ import numpy.typing as npt
 from numpy import linalg as LA
 
 import networkx as nx
+import matplotlib.pyplot as plt
 
 from vartools.linalg import get_orthogonal_basis
 
@@ -253,6 +254,7 @@ class VectorRotationSequence:
 
     @classmethod
     def create_from_vector_array(cls, vectors_array: np.ndarray) -> Self:
+        # 
         array_norm = LA.norm(vectors_array, axis=0)
         if np.any(np.isclose(array_norm, 0)):
             raise ValueError("Zero vector in sequence.")
@@ -501,6 +503,91 @@ class VectorRotationTree:
 
         # TODO: what happens when you overwrite a node (?)
 
+    def draw1(self):
+        # show DiGraph structure
+        options = {
+            'node_color': 'blue',
+            'node_size': 100,
+            'width': 3,
+            'arrowstyle': '-|>',
+            'arrowsize': 12,
+        }
+        #nx.draw_networkx(self._graph, arrows=True,**options)
+        nx.draw(self._graph,with_labels=True)
+        #plt.draw()
+        plt.show()
+
+    def draw(self):
+        # Verify graph is not empty
+        if not self._graph.nodes or not self._graph.edges:
+            print("Graph is empty.")
+            return
+        
+        # Create custom labels for the nodes
+        node_labels = {
+            node: f"Obs: {node.obstacle}, Comp: {node.component}, Level: {node.relative_level}"
+            for node in self._graph.nodes
+        }
+
+        # Relabel the graph for visualization
+        labeled_graph = nx.relabel_nodes(self._graph, node_labels)
+
+        
+        # Set layout and options
+        pos = nx.spring_layout(labeled_graph, seed=42, k=0.5)  # Calculate positions for nodes
+
+        # Adjust positions for better spacing
+        threshold = 0.1  # Distance threshold
+        scaling_factor = 1.5  # Scaling multiplier
+
+        nodes = list(pos.keys())
+        for i, node1 in enumerate(nodes):
+            x1, y1 = pos[node1]
+            for node2 in nodes[i + 1:]:
+                x2, y2 = pos[node2]
+                dist = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+                if dist < threshold:  # Check if distance is below threshold
+                    pos[node2] = (x2 * scaling_factor, y2 * scaling_factor)
+
+        # Assign colors based on component number
+        components = {node.component for node in self._graph.nodes}  # Unique component numbers
+        color_map = plt.cm.get_cmap('tab10', len(components))  # Generate a colormap
+        component_to_color = {comp: color_map(idx) for idx, comp in enumerate(sorted(components))}
+        node_colors = [component_to_color[node.component] for node in self._graph.nodes]
+
+        # Set options for drawing the graph
+        options = {
+        'node_color': node_colors,
+        'node_size': 700,
+        'width': 2,
+        'with_labels': True,
+        'font_size': 10,
+        'cmap': 'tab10',
+    }
+
+        # Draw the graph with labeled nodes
+        plt.ioff() 
+        plt.figure(figsize=(12, 12))
+        nx.draw(labeled_graph, pos, **options)
+        #nx.draw_networkx_labels(labeled_graph, pos, labels=node_labels, font_size=8)
+
+        plt.title("Graph Visualization with Component Names")
+
+        #print("Nodes: ", labeled_graph.nodes)
+        #print("Edges: ", labeled_graph.edges)
+        #plt.tight_layout()
+        plt.savefig("graphs/graph.png",dpi=300, bbox_inches='tight')
+        plt.close()
+
+        # from pyvis.network import Network
+        # net = Network(notebook=True)
+        # net.from_nx(labeled_graph)
+        # #net.from_nx(self._graph)
+        #net.show("graph.html")
+
+
+
+
     @classmethod
     def from_sequence(
         cls, root_id: int, node_id: int, sequence: VectorRotationSequence
@@ -604,7 +691,7 @@ class VectorRotationTree:
                     > pi_margin
                 ):
                     warnings.warn("Breakpoint deactivatet -- check 'vector_rotation'")
-                    # breakpoint()
+                    breakpoint()
                     weight = self._graph.nodes[c_id]["orientation"].rotation_angle
                     weight = (math.pi - abs(weight)) / (math.pi - pi_margin)
                     self._graph.nodes[c_id]["orientation"].rotation_angle *= weight
